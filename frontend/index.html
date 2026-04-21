@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsightBoard – AI-Powered Data Dashboard</title>
+  <meta name="description" content="Upload CSV data, visualize it interactively, and generate AI-driven insights." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LOGIN PAGE (shown first; hides when user logs in)
+═══════════════════════════════════════════════════════════ -->
+<div id="login-page">
+  <div class="login-shell">
+
+    <!-- Left: Hero panel -->
+    <div class="login-left">
+      <div class="login-hero">
+        <div class="logo-mark">🔮</div>
+        <h1>InsightBoard</h1>
+        <p>Your all-in-one AI-powered data visualization and decision intelligence platform.</p>
+        <ul class="login-features">
+          <li>Upload and explore CSV datasets instantly</li>
+          <li>Interactive charts with real-time filtering</li>
+          <li>Auto-generated AI insights from your data</li>
+          <li>Beautiful dark &amp; light themes</li>
+          <li>Zero setup — runs entirely in your browser</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: Login form -->
+    <div class="login-right">
+      <div class="login-form-card">
+        <h2>Welcome back</h2>
+        <p>Sign in to your InsightBoard account to continue.</p>
+
+        <!-- Social login buttons -->
+        <button class="social-btn" onclick="handleLogin(event)">
+          <span>🔵</span> Continue with Google
+        </button>
+        <button class="social-btn" onclick="handleLogin(event)">
+          <span>⚫</span> Continue with GitHub
+        </button>
+
+        <div class="divider">or sign in with email</div>
+
+        <!-- Email / password form -->
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email address</label>
+            <input id="login-email" type="email" class="input" placeholder="you@example.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">
+              Password
+              <a href="#" style="float:right;color:var(--accent-light);font-weight:500;text-decoration:none">Forgot?</a>
+            </label>
+            <input id="login-password" type="password" class="input" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn btn-primary w-full" style="justify-content:center;padding:12px">
+            Sign in
+          </button>
+        </form>
+
+        <p style="text-align:center;margin-top:var(--s5);font-size:.875rem;color:var(--text-secondary)">
+          Don't have an account?
+          <a href="#" style="color:var(--accent-light);font-weight:600;text-decoration:none">Sign up free</a>
+        </p>
+
+        <!-- Demo shortcut -->
+        <p style="text-align:center;margin-top:var(--s3);font-size:.8rem;color:var(--text-muted)">
+          <button class="btn btn-ghost btn-sm w-full" style="margin-top:4px" onclick="handleLogin(event)">
+            Skip login – enter demo
+          </button>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /login-page -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN APP SHELL (hidden until login)
+═══════════════════════════════════════════════════════════ -->
+<div id="app-shell" class="app-shell hidden">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="logo-mark">🔮</div>
+      <div class="logo-text">Insight<span>Board</span></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-label">Main</div>
+
+      <a class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+
+      <a class="nav-item" data-page="upload">
+        <span class="nav-icon">📁</span>
+        <span>Upload Data</span>
+      </a>
+
+      <a class="nav-item" data-page="visualization">
+        <span class="nav-icon">📈</span>
+        <span>Visualization</span>
+      </a>
+
+      <a class="nav-item" data-page="insights">
+        <span class="nav-icon">🧠</span>
+        <span>AI Insights</span>
+      </a>
+
+      <div class="nav-label">Account</div>
+
+      <a class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+    <!-- Sidebar footer: theme toggle -->
+    <div class="sidebar-footer">
+      <div class="flex-between" style="padding:var(--s3) var(--s3) 0">
+        <span style="font-size:.8rem;color:var(--text-secondary)">Dark mode</span>
+        <div class="theme-toggle on" id="sidebar-theme-toggle"></div>
+      </div>
+    </div>
+  </aside><!-- /sidebar -->
+
+  <!-- ── Topbar ────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div id="topbar-title" class="topbar-title">📊 Dashboard</div>
+
+    <div class="topbar-actions">
+      <!-- Theme toggle (topbar) -->
+      <div class="theme-toggle on" id="theme-toggle"></div>
+
+      <!-- Upload shortcut -->
+      <button class="btn btn-ghost btn-sm" onclick="showPage('upload')">
+        ＋ Upload CSV
+      </button>
+
+      <!-- Avatar -->
+      <div class="avatar" title="Shubhankar Pandey">JD</div>
+    </div>
+  </header><!-- /topbar -->
+
+  <!-- ── Main Content ──────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- ════════════════════════════════
+         PAGE: Dashboard
+    ════════════════════════════════ -->
+    <div id="page-dashboard" class="page active">
+
+      <div class="page-header animate-in">
+        <h1>Dashboard</h1>
+        <p>Overview of your key metrics and performance indicators.</p>
+      </div>
+
+      <!-- KPI Cards -->
+      <div id="kpi-grid" class="kpi-grid stagger"></div>
+
+      <!-- Charts row 1 -->
+      <div class="chart-grid">
+        <div class="chart-card animate-in" style="animation-delay:.2s">
+          <div class="chart-header">
+            <div>
+              <div class="card-title">Revenue Trend</div>
+              <span class="badge badge-cyan">Monthly</span>
+            </div>
+            <span class="kpi-badge up">↑ 24.3%</span>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-revenue" height="220"></canvas></div>
+        </div>
+
+        <div class="chart-card animate-in" style="animation-delay:.25s">
+          <div class="chart-header">
+            <div>
+              <div class="card-title">Sales by Category</div>
+              <span class="badge badge-purple">YTD</span>
+            </div>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-category" height="220"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Charts row 2 -->
+      <div class="chart-grid">
+        <div class="chart-card animate-in" style="animation-delay:.3s">
+          <div class="chart-header">
+            <div>
+              <div class="card-title">Traffic Sources</div>
+              <span class="badge badge-purple">All time</span>
+            </div>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-traffic" height="220"></canvas></div>
+        </div>
+
+        <div class="chart-card animate-in" style="animation-delay:.35s">
+          <div class="chart-header">
+            <div>
+              <div class="card-title">Weekly Active Users</div>
+              <span class="badge badge-cyan">This week</span>
+            </div>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-users" height="220"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Summary insights strip -->
+      <div class="card animate-in" style="animation-delay:.4s">
+        <div class="card-title">Quick Insights</div>
+        <div style="display:flex;gap:var(--s4);flex-wrap:wrap">
+          <div class="insight-card" style="flex:1;min-width:200px;border:none;background:var(--bg-3)">
+            <div class="insight-type trend">Trend</div>
+            <div class="insight-title">📈 Revenue up 18%</div>
+            <div class="insight-detail">Q4 outperformed Q3 across all product lines.</div>
+          </div>
+          <div class="insight-card" style="flex:1;min-width:200px;border:none;background:var(--bg-3)">
+            <div class="insight-type top">Top</div>
+            <div class="insight-title">🥇 Electronics leads</div>
+            <div class="insight-detail">Electronics contributes 32% of total revenue.</div>
+          </div>
+          <div class="insight-card" style="flex:1;min-width:200px;border:none;background:var(--bg-3)">
+            <div class="insight-type anomaly">Anomaly</div>
+            <div class="insight-title">⚠️ Conversion dip</div>
+            <div class="insight-detail">Conversion rate dropped 2.4% in the last 7 days.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-dashboard -->
+
+
+    <!-- ════════════════════════════════
+         PAGE: Upload
+    ════════════════════════════════ -->
+    <div id="page-upload" class="page">
+
+      <div class="page-header animate-in">
+        <h1>Upload Data</h1>
+        <p>Drag and drop your CSV file or click to browse. Data is processed in-memory and never stored.</p>
+      </div>
+
+      <!-- Upload Zone -->
+      <div id="upload-zone" class="upload-zone animate-in">
+        <span class="upload-icon">📂</span>
+        <h3>Drop your CSV file here</h3>
+        <p>or <strong style="color:var(--accent-light)">click to browse</strong> · max 50 MB · CSV only</p>
+        <input id="file-input" type="file" accept=".csv" style="display:none" />
+      </div>
+
+      <!-- Upload loading indicator -->
+      <div id="upload-progress" class="flex-center hidden mt-5" style="gap:var(--s3)">
+        <div class="spinner"></div>
+        <span class="text-muted text-sm">Parsing your CSV…</span>
+      </div>
+
+      <!-- File info KPIs -->
+      <div id="file-info" class="hidden mt-5"></div>
+
+      <!-- Preview table -->
+      <div id="preview-table-wrapper" class="hidden animate-in"></div>
+
+      <!-- Tips card -->
+      <div class="card animate-in mt-5" style="animation-delay:.15s">
+        <div class="card-title">Tips for best results</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:var(--s3)">
+          <li class="flex gap-3 text-sm text-muted"><span>💡</span> Include a header row with clear column names.</li>
+          <li class="flex gap-3 text-sm text-muted"><span>🔢</span> Numeric columns are auto-detected for charts and stats.</li>
+          <li class="flex gap-3 text-sm text-muted"><span>📅</span> Date columns will be parsed automatically.</li>
+          <li class="flex gap-3 text-sm text-muted"><span>🔤</span> Categorical columns work great for pie and bar charts.</li>
+        </ul>
+      </div>
+
+    </div><!-- /page-upload -->
+
+
+    <!-- ════════════════════════════════
+         PAGE: Visualization
+    ════════════════════════════════ -->
+    <div id="page-visualization" class="page">
+
+      <div class="page-header animate-in">
+        <h1>Visualization</h1>
+        <p>Select columns and chart type to explore your data interactively.</p>
+      </div>
+
+      <!-- Controls card -->
+      <div class="card animate-in mb-5" id="viz-controls">
+        <div class="card-title">Chart Configuration</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--s4)">
+
+          <div class="form-group" style="margin:0">
+            <label class="form-label" for="viz-x-col">X Axis / Category</label>
+            <select id="viz-x-col" class="select">
+              <option value="">-- Upload data first --</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin:0">
+            <label class="form-label" for="viz-y-col">Y Axis / Value</label>
+            <select id="viz-y-col" class="select">
+              <option value="">-- Optional --</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin:0">
+            <label class="form-label" for="viz-chart-type">Chart Type</label>
+            <select id="viz-chart-type" class="select">
+              <option value="bar">📊 Bar</option>
+              <option value="line">📈 Line</option>
+              <option value="pie">🥧 Pie</option>
+              <option value="doughnut">🍩 Doughnut</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin:0;display:flex;align-items:flex-end">
+            <button class="btn btn-primary w-full" onclick="generateVizChart()">
+              Generate Chart
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Chart loading indicator -->
+      <div id="viz-loading" class="flex-center hidden mb-5" style="gap:var(--s3)">
+        <div class="spinner"></div>
+        <span class="text-muted text-sm">Generating chart from API…</span>
+      </div>
+
+      <!-- Dynamic chart output -->
+      <div id="viz-chart-wrapper" class="chart-card animate-in hidden">
+        <div class="chart-header">
+          <div class="card-title">Chart Output</div>
+          <div class="chip-group">
+            <button class="chip active" onclick="switchVizType('bar',this)">Bar</button>
+            <button class="chip" onclick="switchVizType('line',this)">Line</button>
+            <button class="chip" onclick="switchVizType('pie',this)">Pie</button>
+            <button class="chip" onclick="switchVizType('doughnut',this)">Doughnut</button>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="viz-chart" height="300"></canvas>
+        </div>
+      </div>
+
+      <!-- Demo charts (always visible) -->
+      <div style="margin-top:var(--s6)">
+        <div class="card-title mb-4">Demo Charts (sample data)</div>
+        <div class="chart-grid">
+          <div class="chart-card animate-in">
+            <div class="chart-header"><div class="card-title">Monthly Sales</div></div>
+            <canvas id="viz-demo-1" height="220"></canvas>
+          </div>
+          <div class="chart-card animate-in" style="animation-delay:.1s">
+            <div class="chart-header"><div class="card-title">Product Distribution</div></div>
+            <canvas id="viz-demo-2" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-visualization -->
+
+
+    <!-- ════════════════════════════════
+         PAGE: AI Insights
+    ════════════════════════════════ -->
+    <div id="page-insights" class="page">
+
+      <div class="page-header animate-in">
+        <h1>AI Insights</h1>
+        <p>Automatically generated analysis and recommendations from your dataset.</p>
+      </div>
+
+      <!-- Stats overview -->
+      <div id="stats-panel" class="animate-in mb-5"></div>
+
+      <!-- Recommendation cards -->
+      <div class="card animate-in mb-5">
+        <div class="card-title">Recommendations</div>
+        <div style="display:flex;flex-direction:column;gap:var(--s3)">
+          <div class="settings-row">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">🎯 Focus on top performers</div>
+              <div class="text-sm text-muted mt-1">Allocate more resources to your highest-performing segments for maximum ROI.</div>
+            </div>
+            <span class="badge badge-cyan">High impact</span>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">🔍 Investigate anomalies</div>
+              <div class="text-sm text-muted mt-1">Unusual values detected — review outliers before making decisions.</div>
+            </div>
+            <span class="badge badge-purple">Review</span>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">📊 Enrich your dataset</div>
+              <div class="text-sm text-muted mt-1">Adding time-series data will unlock trend analysis and forecasting.</div>
+            </div>
+            <span class="badge badge-cyan">Suggested</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-generated insight cards -->
+      <div class="card-title mb-4">Generated Insights</div>
+      <div id="insights-grid" class="insights-grid">
+        <!-- Populated by JS -->
+        <div class="empty-state" style="grid-column:1/-1">
+          <span class="empty-state-icon">🧠</span>
+          <h3>No data loaded</h3>
+          <p>Upload a CSV to auto-generate insights.</p>
+          <button class="btn btn-primary mt-5" onclick="showPage('upload')">Upload Data</button>
+        </div>
+      </div>
+
+    </div><!-- /page-insights -->
+
+
+    <!-- ════════════════════════════════
+         PAGE: Settings / Profile
+    ════════════════════════════════ -->
+    <div id="page-settings" class="page">
+
+      <div class="page-header animate-in">
+        <h1>Settings &amp; Profile</h1>
+        <p>Manage your account preferences and application settings.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:var(--s5)">
+
+        <!-- Profile card -->
+        <div class="card animate-in">
+          <div class="settings-section">
+            <h2>Profile</h2>
+            <div class="flex gap-4" style="align-items:center;margin-bottom:var(--s5)">
+              <div class="avatar" style="width:56px;height:56px;font-size:1.25rem">JD</div>
+              <div>
+                <div style="font-weight:700">Shubhankar Pandey</div>
+                <div class="text-sm text-muted">shubhankar@example.com</div>
+                <span class="badge badge-purple" style="margin-top:4px">Pro Plan</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full name</label>
+              <input type="text" class="input" value="shubhankar pandey" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email address</label>
+              <input type="email" class="input" value="shubhankar.doe@example.com" />
+            </div>
+            <button class="btn btn-primary btn-sm">Save changes</button>
+          </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="card animate-in" style="animation-delay:.07s">
+          <div class="settings-section">
+            <h2>Appearance</h2>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem" id="theme-label">Dark mode</div>
+                <div class="text-sm text-muted">Toggle between dark and light themes</div>
+              </div>
+              <div class="theme-toggle on" id="settings-theme-toggle"></div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem">Chart animations</div>
+                <div class="text-sm text-muted">Animate charts when they render</div>
+              </div>
+              <div class="theme-toggle on"></div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem">Compact sidebar</div>
+                <div class="text-sm text-muted">Show icons only in the sidebar</div>
+              </div>
+              <div class="theme-toggle"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data preferences -->
+        <div class="card animate-in" style="animation-delay:.14s">
+          <div class="settings-section">
+            <h2>Data Preferences</h2>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem">Auto-detect column types</div>
+                <div class="text-sm text-muted">Automatically parse dates and numbers</div>
+              </div>
+              <div class="theme-toggle on"></div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem">Preview rows</div>
+                <div class="text-sm text-muted">Rows shown in upload preview</div>
+              </div>
+              <select class="select" style="width:100px">
+                <option>10</option><option>25</option><option>50</option>
+              </select>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem">API endpoint</div>
+                <div class="text-sm text-muted">Backend URL</div>
+              </div>
+            </div>
+            <input type="text" class="input" value="http://localhost:5000" style="margin-top:var(--s2)" />
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="card animate-in" style="animation-delay:.21s">
+          <div class="settings-section">
+            <h2>Notifications</h2>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem">Insight alerts</div>
+                <div class="text-sm text-muted">Get notified when new insights are ready</div>
+              </div>
+              <div class="theme-toggle on"></div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem">Anomaly detection</div>
+                <div class="text-sm text-muted">Alert when anomalies are detected</div>
+              </div>
+              <div class="theme-toggle on"></div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-weight:600;font-size:.9rem">Upload completion</div>
+                <div class="text-sm text-muted">Notify when file processing is done</div>
+              </div>
+              <div class="theme-toggle"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /settings grid -->
+
+      <!-- Danger zone -->
+      <div class="card animate-in mt-5" style="animation-delay:.28s;border-color:rgba(244,63,94,.2)">
+        <div class="settings-section">
+          <h2 style="color:var(--rose)">Danger Zone</h2>
+          <div class="settings-row">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Clear session data</div>
+              <div class="text-sm text-muted">Remove all uploaded files from memory</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="border-color:rgba(244,63,94,.4);color:var(--rose)"
+              onclick="clearSession()">Clear data</button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Delete account</div>
+              <div class="text-sm text-muted">Permanently delete your account and all data</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="border-color:rgba(244,63,94,.4);color:var(--rose)">
+              Delete account
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-settings -->
+
+  </main><!-- /main-content -->
+
+</div><!-- /app-shell -->
+
+
+<!-- ── Toast container ─────────────────────────────────────────── -->
+<div id="toast-container" class="toast-container"></div>
+
+
+<!-- ── Inline extra script ─────────────────────────────────────── -->
+<script>
+  /**
+   * Wires up the theme toggles in Settings and Topbar.
+   * Renders demo charts on the Visualization page.
+   * Handles chip switching for viz chart type.
+   */
+
+  // Sync all theme toggles with the stored theme
+  document.querySelectorAll('.theme-toggle').forEach(el => {
+    if (el.id !== 'theme-toggle' && el.id !== 'sidebar-theme-toggle' && el.id !== 'settings-theme-toggle') return;
+    el.addEventListener('click', () => {
+      const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+    });
+  });
+
+  // Clear session data
+  function clearSession() {
+    state.sessionId = null;
+    state.columns = [];
+    state.dtypes = {};
+    state.rowCount = 0;
+    state.filename = '';
+    showToast('Session data cleared.', 'info');
+  }
+
+  // Switch viz chart type via chips
+  function switchVizType(type, btn) {
+    document.getElementById('viz-chart-type').value = type;
+    btn.closest('.chip-group').querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    generateVizChart();
+  }
+
+  // Render demo charts on the visualization page
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      renderChart('viz-demo-1', {
+        type: 'line',
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [{
+          label: 'Sales',
+          data: [300, 420, 390, 510, 480, 620],
+          borderColor: '#6C63FF',
+          backgroundColor: 'rgba(108,99,255,.1)',
+          fill: true, tension: 0.4, borderWidth: 2, pointRadius: 4,
+        }],
+      });
+
+      renderChart('viz-demo-2', {
+        type: 'doughnut',
+        labels: ['Product A','Product B','Product C','Product D'],
+        datasets: [{
+          data: [40, 25, 20, 15],
+          backgroundColor: ['#6C63FF','#22d3ee','#f59e0b','#10b981'],
+          borderWidth: 2,
+        }],
+      });
+    }, 300);
+  });
+</script>
+
+<script src="script.js"></script>
+
+</body>
+</html>
