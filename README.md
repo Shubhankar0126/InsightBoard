@@ -5,7 +5,7 @@ A clean and interactive web application to upload CSV data, visualize it using c
 ---
 
 ## 🚀 Live Demo
-👉 https://69e7e11e0834140fe4f67bf1--serene-meerkat-b2cd01.netlify.app/
+👉 https://69e7ef4f6a05773b250d031f--splendorous-pie-188d4e.netlify.app/
 
 ---
 
