@@ -4,7 +4,7 @@
  */
 
 /* ── Config ──────────────────────────────────────────────────── */
-const API_BASE = 'https://insightboard-7vtq.onrender.com';
+const API_BASE = 'https://insightboard-1-49dp.onrender.com';
 
 /* ── App State ───────────────────────────────────────────────── */
 const state = {
