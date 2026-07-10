@@ -285,12 +285,27 @@ function renderChart(canvasId, config, options = {}) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // Destroy old instance if exists
-  if (state.charts[canvasId]) {
-    state.charts[canvasId].destroy();
-    delete state.charts[canvasId];
+  // Destroy any existing chart attached to this canvas
+  const existingChart = Chart.getChart(canvas);
+
+  if (existingChart) {
+    existingChart.destroy();
   }
 
+  // Remove old chart reference
+  delete state.charts[canvasId];
+
+  const isDark = state.theme === 'dark';
+
+  // Destroy any existing chart attached to this canvas
+const existingChart = Chart.getChart(canvas);
+
+if (existingChart) {
+  existingChart.destroy();
+}
+
+// Remove old chart reference
+delete state.charts[canvasId];
   const isDark = state.theme === 'dark';
   const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
   const textColor = isDark ? '#9091a8' : '#5c5c7a';
